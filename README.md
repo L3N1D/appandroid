@@ -15,6 +15,12 @@
 | **Watchlist** | **О приложении** |
 | ![Watchlist](docs/screenshots/watchlist.png) | ![About](docs/screenshots/about.png) |
 
+ВИДЕО
+
+https://github.com/user-attachments/assets/97b5b6cb-fb10-4d4e-b71c-c4c491aa2930
+
+
+
 Дополнительно: [нижняя часть экрана деталей](docs/screenshots/details_bottom.png),
 [пагинация до конца списка](docs/screenshots/pagination.png),
 [сортировка по цене](docs/screenshots/sort_price.png),
