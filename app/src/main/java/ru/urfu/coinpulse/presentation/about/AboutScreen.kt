@@ -68,7 +68,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                 color = TextPrimary,
             )
             Text(
-                text = "Practice 4 · live network + clean architecture",
+                text = "Practice 5 · local storage + filters",
                 style = MaterialTheme.typography.labelMedium,
                 color = TextTertiary,
             )
@@ -121,15 +121,28 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         }
 
         SectionCard(title = "What is implemented") {
-            FeatureRow("Single activity, four Compose destinations")
+            FeatureRow("Single activity, five Compose destinations")
             FeatureRow("Bottom navigation with saved/restored tab state")
             FeatureRow("Live CoinGecko data via Retrofit + OkHttp")
             FeatureRow("Domain, data and presentation layers with use cases")
             FeatureRow("Loading, error and retry states for every request")
             FeatureRow("Paged list, search, sorting and pull-to-refresh")
+            FeatureRow("Filters screen persisted with DataStore")
+            FeatureRow("Offline watchlist stored in Room")
+            FeatureRow("Shared filter badge cache created via DI")
             FeatureRow("Details screen with a ConstraintLayout stats grid")
-            FeatureRow("Watchlist shared between list, details and tab")
-            FeatureRow("Flow-based favorites and HTTP/in-memory cache")
+        }
+
+        SectionCard(title = "Local storage") {
+            FeatureRow("Filters: DataStore Preferences, 3 settings, restored on launch")
+            FeatureRow("Favorites: Room database, available without internet")
+            FeatureRow("Badge: shared FilterBadgeCache instance created by AppContainer")
+            Text(
+                text = "The filter badge is not persisted separately: on launch it is derived from the saved filters and restored in the shared cache.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                modifier = Modifier.padding(top = 6.dp),
+            )
         }
 
         SectionCard(title = "Live CoinGecko API") {
@@ -162,6 +175,8 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     "Retrofit",
                     "OkHttp",
                     "Gson",
+                    "DataStore",
+                    "Room / KSP",
                     "UseCases",
                     "Clean Architecture",
                     "Chucker",
@@ -213,7 +228,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.padding(start = 6.dp))
             Text(
-                text = "Next practice: persist settings and expand offline caching for a production-like experience.",
+                text = "Next practice: expand offline caching and add more local-first features.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
             )

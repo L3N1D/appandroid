@@ -1,9 +1,10 @@
 package ru.urfu.coinpulse.domain.repository
 
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import ru.urfu.coinpulse.domain.model.ChartRange
 import ru.urfu.coinpulse.domain.model.Coin
 import ru.urfu.coinpulse.domain.model.CoinDetails
+import ru.urfu.coinpulse.domain.model.CoinFilters
 import ru.urfu.coinpulse.domain.model.CoinPage
 import ru.urfu.coinpulse.domain.model.CoinSort
 
@@ -13,11 +14,12 @@ import ru.urfu.coinpulse.domain.model.CoinSort
  */
 interface CoinRepository {
 
-    val favorites: StateFlow<List<Coin>>
+    val favorites: Flow<List<Coin>>
 
     suspend fun getCoins(
         query: String,
         sort: CoinSort,
+        filters: CoinFilters,
         page: Int,
         pageSize: Int,
         forceRefresh: Boolean,
@@ -33,7 +35,5 @@ interface CoinRepository {
         range: ChartRange,
     ): Result<List<Double>>
 
-    fun toggleFavorite(coin: Coin)
-
-    fun isFavorite(id: String): Boolean
+    suspend fun toggleFavorite(coin: Coin)
 }
