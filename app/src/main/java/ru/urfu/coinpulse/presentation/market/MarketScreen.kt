@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -78,6 +79,7 @@ import ru.urfu.coinpulse.presentation.theme.TextTertiary
 @Composable
 fun MarketRoute(
     onCoinClick: (String) -> Unit,
+    onFiltersClick: () -> Unit,
     viewModel: MarketViewModel = viewModel(factory = MarketViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -90,6 +92,7 @@ fun MarketRoute(
         onLoadMore = viewModel::loadMore,
         onFavoriteClick = viewModel::onFavoriteClick,
         onCoinClick = onCoinClick,
+        onFiltersClick = onFiltersClick,
     )
 }
 
@@ -104,12 +107,15 @@ fun MarketScreen(
     onLoadMore: () -> Unit,
     onFavoriteClick: (String) -> Unit,
     onCoinClick: (String) -> Unit,
+    onFiltersClick: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         MarketHeader(
             total = state.total,
             isRefreshing = state.isRefreshing,
+            showFilterBadge = state.showFilterBadge,
             onRefresh = onRefresh,
+            onFiltersClick = onFiltersClick,
         )
         MarketSearchField(
             query = state.query,
@@ -145,11 +151,19 @@ fun MarketScreen(
                 )
 
                 state.coins.isEmpty() -> EmptyState(
-                    title = "No coins found",
-                    message = "Nothing matches “${state.query}”. Try another name or ticker.",
+                    title = if (state.filters.isActive) "No coins match filters" else "No coins found",
+                    message = when {
+                        state.filters.isActive ->
+                            "Try lowering the market cap or volume threshold, or change the 24h performance filter."
+                        state.query.isNotBlank() ->
+                            "Nothing matches “${state.query}”. Try another name or ticker."
+                        else -> "Pull to refresh the live CoinGecko feed."
+                    },
                     icon = Icons.Filled.Search,
-                    actionLabel = "Clear search",
-                    onAction = { onQueryChange("") },
+                    actionLabel = if (state.filters.isActive) "Edit filters" else "Clear search",
+                    onAction = {
+                        if (state.filters.isActive) onFiltersClick() else onQueryChange("")
+                    },
                 )
 
                 else -> PullToRefreshBox(
@@ -177,7 +191,9 @@ fun MarketScreen(
 private fun MarketHeader(
     total: Int,
     isRefreshing: Boolean,
+    showFilterBadge: Boolean,
     onRefresh: () -> Unit,
+    onFiltersClick: () -> Unit,
 ) {
     val transition = rememberInfiniteTransition(label = "live-dot")
     val dotAlpha by transition.animateFloat(
@@ -227,6 +243,24 @@ private fun MarketHeader(
                 style = MaterialTheme.typography.labelMedium,
                 color = TextTertiary,
             )
+        }
+        IconButton(onClick = onFiltersClick) {
+            Box {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "Filters",
+                    tint = if (showFilterBadge) Primary else TextSecondary,
+                )
+                if (showFilterBadge) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(Negative),
+                    )
+                }
+            }
         }
         IconButton(onClick = onRefresh) {
             if (isRefreshing) {

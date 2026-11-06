@@ -42,7 +42,7 @@ class WatchlistViewModel(
 
     fun onRemoveFavorite(coinId: String) {
         val coin = _uiState.value.coins.firstOrNull { it.id == coinId } ?: return
-        toggleFavorite(coin)
+        viewModelScope.launch { toggleFavorite(coin) }
     }
 
     companion object {

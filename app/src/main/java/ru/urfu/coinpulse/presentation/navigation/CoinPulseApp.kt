@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ru.urfu.coinpulse.presentation.about.AboutScreen
 import ru.urfu.coinpulse.presentation.details.CoinDetailsRoute
+import ru.urfu.coinpulse.presentation.filters.FilterRoute
 import ru.urfu.coinpulse.presentation.market.MarketRoute
 import ru.urfu.coinpulse.presentation.theme.Background
 import ru.urfu.coinpulse.presentation.theme.Primary
@@ -65,6 +66,9 @@ fun CoinPulseApp() {
                     onCoinClick = { coinId ->
                         navController.navigate(Routes.coinDetails(coinId))
                     },
+                    onFiltersClick = {
+                        navController.navigate(Routes.FILTERS)
+                    },
                 )
             }
 
@@ -87,6 +91,12 @@ fun CoinPulseApp() {
 
             composable(Routes.ABOUT) {
                 AboutScreen()
+            }
+
+            composable(Routes.FILTERS) {
+                FilterRoute(
+                    onBack = { navController.popBackStack() },
+                )
             }
 
             composable(

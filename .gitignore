@@ -14,4 +14,7 @@ local.properties
 build-output*.txt
 docs/demo.mp4
 docs/demo_practice4.mp4
+docs/demo_practice5.mp4
 docs/p4_ui.xml
+docs/p5_ui.xml
+docs/p5_filters_ui.xml

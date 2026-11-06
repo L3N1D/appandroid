@@ -11,6 +11,7 @@ object Routes {
     const val MARKET = "market"
     const val WATCHLIST = "watchlist"
     const val ABOUT = "about"
+    const val FILTERS = "filters"
 
     const val COIN_ID_ARG = "coinId"
     const val COIN_DETAILS = "coin/{$COIN_ID_ARG}"
