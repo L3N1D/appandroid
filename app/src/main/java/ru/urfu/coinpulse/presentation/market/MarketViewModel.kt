@@ -71,16 +71,16 @@ class MarketViewModel(
         viewModelScope.launch {
             observeFilters().distinctUntilChanged().collect { filters ->
                 badgeCache.update(filters.isActive)
-                _uiState.update {
-                    it.copy(
-                        filters = filters,
-                        showFilterBadge = filters.isActive,
-                    )
-                }
+                _uiState.update { it.copy(filters = filters) }
                 reload(
                     showFullScreenLoader = _uiState.value.coins.isEmpty(),
                     forceRefresh = false,
                 )
+            }
+        }
+        viewModelScope.launch {
+            badgeCache.visible.collect { visible ->
+                _uiState.update { it.copy(showFilterBadge = visible) }
             }
         }
     }
