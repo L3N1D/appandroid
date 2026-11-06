@@ -1,165 +1,211 @@
-# CoinPulse — практика 3
+# CoinPulse — практика 4
 
-Учебное Android-приложение по открытым данным **CoinGecko**: список криптовалют с поиском,
-сортировкой и пагинацией, экран деталей и нижняя навигация. Данные в этой практике
-**моковые** — сетевой слой появится в следующей практике, но модели и экраны уже
-подготовлены под реальные ответы CoinGecko.
+Android-приложение по открытым данным **CoinGecko**. Список криптовалют, поиск, сортировка,
+пагинация, экран деталей, график цены, watchlist и нижняя навигация.
+
+В этой практике данные загружаются **из реального API** через Retrofit/OkHttp. Проект
+разделён на слои **domain / data / presentation**, сетевые запросы управляются
+ViewModel через use cases, есть состояния загрузки, ошибок и retry.
 
 ## Скриншоты
 
-| Список монет | Экран деталей |
+| Живой список монет | Экран деталей |
 | --- | --- |
-| ![Markets](docs/screenshots/market.png) | ![Details](docs/screenshots/details.png) |
-| **Поиск** | **Диапазон 30 дней** |
-| ![Search](docs/screenshots/search.png) | ![Details 30D](docs/screenshots/details_30d.png) |
-| **Watchlist** | **О приложении** |
-| ![Watchlist](docs/screenshots/watchlist.png) | ![About](docs/screenshots/about.png) |
+| ![Markets](docs/screenshots/p4_market.png) | ![Details](docs/screenshots/p4_details.png) |
+| **Живой график 30D** | **Ошибка сети + retry** |
+| ![30D chart](docs/screenshots/p4_30d.png) | ![Network error](docs/screenshots/p4_error.png) |
+| **Восстановление после retry** | **Chucker: выполненные запросы** |
+| ![Recovered](docs/screenshots/p4_recovered.png) | ![Chucker](docs/screenshots/p4_chucker.png) |
 
-ВИДЕО
-
-https://github.com/user-attachments/assets/97b5b6cb-fb10-4d4e-b71c-c4c491aa2930
-
-
-
-Дополнительно: [нижняя часть экрана деталей](docs/screenshots/details_bottom.png),
-[пагинация до конца списка](docs/screenshots/pagination.png),
-[сортировка по цене](docs/screenshots/sort_price.png),
-[нижняя часть экрана About](docs/screenshots/about_bottom.png).
-
-## Что реализовано
-
-- **Single Activity** — `MainActivity` + Jetpack Compose, без XML-экранов.
-- **Bottom navigation** — Markets / Watchlist / About, состояние вкладок сохраняется и
-  восстанавливается (`saveState` / `restoreState`).
-- **Список** — `LazyColumn` с ключами, карточками, спарклайнами и `CoinRow`.
-- **Пагинация** — по 10 монет, `loadMore()` срабатывает при приближении к концу списка,
-  есть индикатор загрузки и состояние «конец ленты». Всего в мок-фиде 30 монет.
-- **Поиск** — по названию, тикеру и id с debounce 300 мс.
-- **Сортировка** — по капитализации, цене и изменению за 24 часа.
-- **Pull-to-refresh** — `PullToRefreshBox` из Material 3.
-- **Экран деталей** — переход по `coin/{coinId}`, график цены с диапазонами 1D/7D/30D/1Y,
-  сложная сетка характеристик на **ConstraintLayout**, описание с «Read more», ссылки,
-  категории и метаданные.
-- **Watchlist** — общий набор избранного для списка, деталей и отдельной вкладки;
-  изменение мгновенно отражается на всех экранах.
-- **MVVM** — ViewModel + `StateFlow` + `collectAsStateWithLifecycle`, репозиторий за
-  интерфейсом, ручная фабрика ViewModel без DI-фреймворков.
-- **Тёмная тема**, edge-to-edge, собственный splash screen на Android 12+.
-- **8 unit-тестов** на пагинацию, поиск, сортировку, избранное и графики.
-
-## Стек
-
-| Слой | Технологии |
-| --- | --- |
-| UI | Kotlin, Jetpack Compose, Material 3 |
-| Навигация | Navigation Compose |
-| Состояние | ViewModel, StateFlow, Coroutines, SavedStateHandle |
-| Сложная разметка | ConstraintLayout Compose |
-| Изображения | Coil 2 |
-| Сборка | Gradle 8.11.1, AGP 8.7.0, Kotlin 2.0.21 |
-| Тесты | JUnit 4, kotlinx-coroutines-test |
-
-## Архитектура
-
-```
-app/src/main/java/ru/urfu/coinpulse/
-├── MainActivity.kt                 # единственная Activity
-├── CoinPulseApplication.kt         # ручной service locator: один MockCoinRepository
-├── data/
-│   ├── Coin.kt                     # Coin, CoinDetails, CoinPage, CoinSort, ChartRange
-│   ├── CoinRepository.kt           # контракт источника данных
-│   ├── MockCoinRepository.kt       # пагинация, поиск, сортировка, избранное, задержки сети
-│   └── MockCoinData.kt             # 30 монет + генерация деталей и графиков
-└── ui/
-    ├── navigation/                 # Routes, CoinPulseApp, нижняя навигация
-    ├── market/                     # MarketScreen + MarketViewModel
-    ├── details/                    # CoinDetailsScreen + CoinDetailsViewModel
-    ├── watchlist/                  # WatchlistScreen + WatchlistViewModel
-    ├── about/                      # AboutScreen
-    ├── components/                 # CoinRow, CoinLogo, Sparkline, PriceChart, состояния
-    ├── format/                     # форматирование цен, процентов и капитализации
-    └── theme/                      # цвета, типографика, MaterialTheme
-```
-
-Поток данных:
-
-```
-Compose screen ──(intent)──> ViewModel ──(suspend)──> CoinRepository
-      ▲                          │
-      └──── StateFlow<UiState> ──┘
-```
-
-- UI не знает, откуда приходят данные: `MockCoinRepository` легко заменяется на
-  Retrofit/OkHttp-реализацию.
-- `MockCoinRepository` имитирует сетевые задержки (650 мс для списка, 450 мс для деталей),
-  поэтому видны скелетоны и индикатор пагинации.
-- `MarketUiState` и `CoinDetailsUiState` — иммутабельные data-классы; все изменения
-  проходят через `MutableStateFlow.update`.
-- `coinId` передаётся через маршрут `coin/{coinId}` и читается в `CoinDetailsViewModel`
-  из `SavedStateHandle`.
-
-## Соответствие данным CoinGecko
-
-| Экран | Реальный endpoint | Поля |
-| --- | --- | --- |
-| Список | `GET /coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1` | id, symbol, name, image, current_price, market_cap, market_cap_rank, total_volume, high_24h, low_24h, price_change_percentage_24h/7d, circulating_supply, max_supply, ath, atl, sparkline |
-| Детали | `GET /coins/{id}?localization=false&tickers=false&market_data=false` | description, links, categories, genesis_date, hashing_algorithm, market_data, last_updated |
-| График | `GET /coins/{id}/market_chart?vs_currency=usd&days=1\|7\|30\|365` | prices (мок-серия, детерминированная по id и диапазону) |
-
-Ссылка на выбранную предметную область:
-[CoinGecko API](https://docs.coingecko.com/reference/introduction).
-
-## Навигация
-
-```
-market ──────────────┐
-watchlist ───────────┼──> coin/{coinId}
-about                │
-                     └── bottom bar виден только на корневых вкладках
-```
-
-- Нижняя панель скрыта на экране деталей.
-- Переключение вкладок использует `popUpTo(startDestination) { saveState = true }`,
-  `launchSingleTop` и `restoreState`.
-- Назад с экрана деталей возвращает к списку и сохраняет позицию скролла.
-
-## Сборка и запуск
-
-Требования: JDK 17, Android SDK 35, эмулятор или устройство с API 24+.
-
-```bash
-./gradlew assembleDebug          # APK: app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest      # unit-тесты
-```
-
-Или открыть папку проекта в Android Studio и запустить конфигурацию `app`.
-
-## Тесты
-
-`app/src/test/java/ru/urfu/coinpulse/data/MockCoinRepositoryTest.kt`:
-
-- размер первой страницы и наличие следующих;
-- последняя страница и страница за пределами списка;
-- поиск по названию и тикеру;
-- сортировка по цене и изменению за 24 часа;
-- общее избранное и его переключение;
-- поля деталей и длина/конец графиков.
-
-## Ветка и merge request
-
-Работа ведётся в ветке `feature/practice-3-coinpulse`:
-
-```bash
-git checkout -b feature/practice-3-coinpulse
-git add .
-git commit -m "feat: CoinPulse market, details and bottom navigation"
-git push -u origin feature/practice-3-coinpulse
-```
-
-После push открыть merge request в GitHub/GitLab из этой ветки в `main` и прикрепить
-ссылку на MR в таблицу практики.
+Скриншоты практики 3 остались в `docs/screenshots/` для истории.
 
 ## Демо
 
-Запись экрана: `docs/demo.mp4` (создаётся локально при сдаче и не коммитится в git,
-чтобы не увеличивать репозиторий).
+- Практика 3: https://github.com/user-attachments/assets/97b5b6cb-fb10-4d4e-b71c-c4c491aa2930
+- Практика 4: локальная запись `docs/demo_practice4.mp4` (не коммитится в git —
+  приложите её к сдаче отдельно). В записи: загрузка, список, детали, отключение сети,
+  ошибка, восстановление по Retry.
+
+## Что реализовано
+
+- **Сеть** — Retrofit 2 + OkHttp + Gson, все запросы асинхронные, выполняются на
+  `Dispatchers.IO` внутри репозитория.
+- **Clean Architecture**:
+  - `domain` — модели, интерфейс репозитория, use cases, доменные ошибки;
+  - `data` — CoinGeckoApi, DTO, mappers, NetworkModule, реализации репозитория и
+    локального хранилища;
+  - `presentation` — Compose-экраны, ViewModels и UI-состояния.
+- **MVVM** — ViewModel + `StateFlow` + `collectAsStateWithLifecycle`; UI не знает про
+  Retrofit и DTO.
+- **Загрузка** — skeleton-состояния для списка и деталей, pull-to-refresh,
+  индикатор пагинации, отдельный индикатор загрузки графика.
+- **Ошибки** — доменные `AppException`: нет интернета, rate limit (429), ошибка сервера,
+  пустой ответ. Для списка показывается баннер с Retry, для деталей — полноэкранное
+  состояние ошибки, для графика — отдельная ошибка с повтором.
+- **Конфигурируемые запросы**:
+  - query-параметры `vs_currency`, `order`, `per_page`, `page`, `sparkline`,
+    `price_change_percentage`;
+  - path-параметр `{id}` для деталей и `{id}` + query `days` для графика.
+- **Кэширование** — in-memory кэш снимка рынка, деталей и графиков + HTTP-кэш OkHttp;
+  избранное хранится в `StateFlow`.
+- **Chucker** — debug-интерсептор и экран Network inspector в разделе About.
+- **Пагинация** — по 10 монет. Из-за жёсткого лимита keyless CoinGecko приложение
+  загружает снимок топ-30 одним запросом и делает поиск/сортировку/пагинацию по нему;
+  это осознанная стратегия кэширования, а не мок-данные.
+- **Тесты** — 13 unit-тестов на mappers, кэш, пагинацию, поиск, сортировку, ошибки,
+  избранное и графики.
+
+## Чистая архитектура
+
+```
+app/src/main/java/ru/urfu/coinpulse/
+├── di/
+│   └── AppContainer.kt              # ручной DI-граф
+├── domain/
+│   ├── model/                       # Coin, CoinDetails, CoinPage, CoinSort, ChartRange
+│   ├── repository/CoinRepository.kt # контракт, не знает про Android/Retrofit
+│   ├── error/AppException.kt        # доменные ошибки
+│   └── usecase/CoinUseCases.kt      # GetCoins, GetCoinDetails, GetChart, ...
+├── data/
+│   ├── remote/
+│   │   ├── CoinGeckoApi.kt          # Retrofit API
+│   │   ├── dto/                     # JSON-модели
+│   │   └── mapper/                  # DTO -> domain
+│   ├── network/NetworkModule.kt     # OkHttp, cache, Chucker, Retrofit
+│   ├── local/FavoritesStore.kt      # StateFlow с избранным
+│   └── repository/CoinRepositoryImpl.kt
+└── presentation/
+    ├── market/                      # экран + ViewModel + UiState
+    ├── details/                     # экран + ViewModel + UiState
+    ├── watchlist/
+    ├── about/
+    ├── components/
+    ├── navigation/
+    └── theme/
+```
+
+Направление зависимостей:
+
+```
+presentation ──> domain <── data
+```
+
+`domain` не зависит от Android SDK, Retrofit и Gson. `data` реализует контракт
+`CoinRepository`. `presentation` работает только с use cases.
+
+## Сетевой поток
+
+```
+Compose screen
+    │ intent (refresh/search/sort/range)
+    ▼
+ViewModel ──> UseCase ──> CoinRepository
+    ▲                        │
+    │ StateFlow<UiState>     ├── in-memory cache (StateFlow)
+    └────────────────────────┤
+                             ├── OkHttp HTTP cache
+                             └── CoinGeckoApi (Retrofit, Dispatchers.IO)
+                                      │
+                                      ▼
+                                 CoinGecko API
+```
+
+- ViewModel запускает корутину в `viewModelScope`; репозиторий переключается на
+  `Dispatchers.IO` через `withContext`.
+- Результат возвращается как `Result<T>`; ошибки мапятся в `AppException` в data-слое.
+- UI получает иммутабельный `UiState` и рисует loading / content / error.
+
+## Endpoints
+
+| Назначение | Запрос |
+| --- | --- |
+| Список | `GET /coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1&sparkline=true&price_change_percentage=24h,7d` |
+| Детали | `GET /coins/{id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=true` |
+| График | `GET /coins/{id}/market_chart?vs_currency=usd&days=1\|7\|30\|365` |
+
+Base URL: `https://api.coingecko.com/api/v3/`.
+
+Keyless CoinGecko имеет строгий rate limit. Для него сделаны:
+- HTTP-кэш OkHttp + TTL для успешных ответов;
+- один повтор при HTTP 429;
+- понятное сообщение `CoinGecko rate limit reached` в UI;
+- кэш снимка рынка на 55 секунд, деталей и графиков — на 5 минут.
+
+## Обработка ошибок
+
+`CoinRepositoryImpl` переводит технические исключения в доменные:
+
+| Причина | Доменная ошибка | Текст в UI |
+| --- | --- | --- |
+| `IOException` / нет сети | `AppException.NoConnection` | No internet connection… |
+| HTTP 429 | `AppException.RateLimited` | CoinGecko rate limit reached… |
+| HTTP 5xx / другой код | `AppException.Server` | CoinGecko returned an error (code)… |
+| Пустой ответ | `AppException.EmptyResponse` | CoinGecko returned an empty response… |
+| Прочее | `AppException.Unknown` | Something went wrong… |
+
+Ошибку можно воспроизвести, включив авиарежим на эмуляторе и нажав refresh:
+появится баннер **Couldn't refresh → Retry**. После выключения авиарежима Retry
+загружает свежие данные.
+
+## Кэширование и Flow
+
+- `FavoritesStore` — `MutableStateFlow<List<Coin>>`; watchlist и сердечки на всех экранах
+  обновляются реактивно.
+- `CoinRepositoryImpl` хранит снимок рынка, детали и графики в `MutableStateFlow`.
+- OkHttp кэш сохраняет ответы на диск; force refresh отправляет `Cache-Control: no-cache`.
+- Favorites содержат полный snapshot `Coin`, поэтому watchlist работает и без сети.
+
+## Chucker
+
+В debug-сборке установлен `ChuckerInterceptor`. Открыть инспектор можно в разделе
+**About → Network inspector → Open Chucker**. На скриншоте
+[`p4_chucker.png`](docs/screenshots/p4_chucker.png) видны:
+
+- `GET /coins/markets` — 200;
+- `GET /coins/markets` — ошибка при выключенной сети;
+- `GET /coins/bitcoin/market_chart?days=30` — 200;
+- `GET /coins/bitcoin?market_data=true` — 200.
+
+## Сборка и запуск
+
+Требования: JDK 17, Android SDK 35, эмулятор/устройство API 24+.
+
+```bash
+./gradlew assembleDebug
+./gradlew testDebugUnitTest
+```
+
+APK: `app/build/outputs/apk/debug/app-debug.apk`.
+
+Проверка вручную:
+
+1. Запустить приложение — появится skeleton, затем живой список.
+2. Открыть монету — загрузятся детали и 7D-график.
+3. Нажать 30D — выполнится запрос `/market_chart`.
+4. Включить авиарежим и нажать refresh — появится ошибка сети.
+5. Выключить авиарежим и нажать Retry — список обновится.
+6. About → Open Chucker — посмотреть запросы.
+
+## Тесты
+
+```bash
+./gradlew testDebugUnitTest
+```
+
+13 тестов:
+
+- `CoinMappersTest` — nullable-поля, HTML в описании, ссылки, chart points;
+- `CoinRepositoryImplTest` — параметры запроса, пагинация, поиск, сортировка,
+  TTL-кэш, force refresh, `IOException → NoConnection`, `429 → RateLimited`,
+  кэш деталей, sparkline для 1D/7D, избранное.
+
+## Ветка и PR
+
+Ветка практики: `feature/practice-4-network`.
+
+```bash
+git push -u origin feature/practice-4-network
+```
+
+PR создаётся из `feature/practice-4-network` в `main`. Ссылка на PR добавляется в
+таблицу практики; видео и скриншот Chucker прикладываются к сдаче.
