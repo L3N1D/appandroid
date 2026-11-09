@@ -121,7 +121,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         }
 
         SectionCard(title = "What is implemented") {
-            FeatureRow("Single activity, six Compose destinations")
+            FeatureRow("Single activity, Compose navigation")
             FeatureRow("Bottom navigation with saved/restored tab state")
             FeatureRow("Live CoinGecko data via Retrofit + OkHttp")
             FeatureRow("Domain, data and presentation layers with use cases")
