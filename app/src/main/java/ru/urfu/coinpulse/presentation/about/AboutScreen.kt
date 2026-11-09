@@ -68,7 +68,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                 color = TextPrimary,
             )
             Text(
-                text = "Practice 5 · local storage + filters",
+                text = "Practice 6 · profile & local files",
                 style = MaterialTheme.typography.labelMedium,
                 color = TextTertiary,
             )
@@ -121,7 +121,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         }
 
         SectionCard(title = "What is implemented") {
-            FeatureRow("Single activity, five Compose destinations")
+            FeatureRow("Single activity, Compose navigation")
             FeatureRow("Bottom navigation with saved/restored tab state")
             FeatureRow("Live CoinGecko data via Retrofit + OkHttp")
             FeatureRow("Domain, data and presentation layers with use cases")
@@ -130,6 +130,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             FeatureRow("Filters screen persisted with DataStore")
             FeatureRow("Offline watchlist stored in Room")
             FeatureRow("Shared filter badge cache created via DI")
+            FeatureRow("Profile with gallery/camera avatar and resume download")
             FeatureRow("Details screen with a ConstraintLayout stats grid")
         }
 
@@ -137,8 +138,10 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             FeatureRow("Filters: DataStore Preferences, 3 settings, restored on launch")
             FeatureRow("Favorites: Room database, available without internet")
             FeatureRow("Badge: shared FilterBadgeCache instance created by AppContainer")
+            FeatureRow("Profile: DataStore fields + avatar copied into internal storage")
+            FeatureRow("Resume: downloaded with OkHttp and opened via FileProvider")
             Text(
-                text = "The filter badge is not persisted separately: on launch it is derived from the saved filters and restored in the shared cache.",
+                text = "Gallery uses the system Photo Picker and camera uses ACTION_IMAGE_CAPTURE with FileProvider, so no storage or camera runtime permission is requested.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
                 modifier = Modifier.padding(top = 6.dp),
@@ -177,6 +180,8 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     "Gson",
                     "DataStore",
                     "Room / KSP",
+                    "FileProvider",
+                    "Photo Picker",
                     "UseCases",
                     "Clean Architecture",
                     "Chucker",
@@ -228,7 +233,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.padding(start = 6.dp))
             Text(
-                text = "Next practice: expand offline caching and add more local-first features.",
+                text = "Profile fields and avatars stay on the device; the resume is downloaded on demand.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
             )

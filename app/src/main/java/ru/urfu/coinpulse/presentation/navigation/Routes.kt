@@ -4,12 +4,15 @@ import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
 
 object Routes {
     const val MARKET = "market"
     const val WATCHLIST = "watchlist"
+    const val PROFILE = "profile"
+    const val PROFILE_EDIT = "profile/edit"
     const val ABOUT = "about"
     const val FILTERS = "filters"
 
@@ -26,6 +29,7 @@ enum class TopLevelDestination(
 ) {
     MARKET(Routes.MARKET, "Markets", Icons.AutoMirrored.Filled.List),
     WATCHLIST(Routes.WATCHLIST, "Watchlist", Icons.Filled.Star),
+    PROFILE(Routes.PROFILE, "Profile", Icons.Filled.Person),
     ABOUT(Routes.ABOUT, "About", Icons.Filled.Info),
 }
 

@@ -23,6 +23,8 @@ import ru.urfu.coinpulse.presentation.about.AboutScreen
 import ru.urfu.coinpulse.presentation.details.CoinDetailsRoute
 import ru.urfu.coinpulse.presentation.filters.FilterRoute
 import ru.urfu.coinpulse.presentation.market.MarketRoute
+import ru.urfu.coinpulse.presentation.profile.EditProfileRoute
+import ru.urfu.coinpulse.presentation.profile.ProfileRoute
 import ru.urfu.coinpulse.presentation.theme.Background
 import ru.urfu.coinpulse.presentation.theme.Primary
 import ru.urfu.coinpulse.presentation.theme.PrimaryMuted
@@ -91,6 +93,19 @@ fun CoinPulseApp() {
 
             composable(Routes.ABOUT) {
                 AboutScreen()
+            }
+
+            composable(Routes.PROFILE) {
+                ProfileRoute(
+                    onEdit = { navController.navigate(Routes.PROFILE_EDIT) },
+                )
+            }
+
+            composable(Routes.PROFILE_EDIT) {
+                EditProfileRoute(
+                    onBack = { navController.popBackStack() },
+                    onSaved = { navController.popBackStack() },
+                )
             }
 
             composable(Routes.FILTERS) {
