@@ -1,6 +1,11 @@
 package ru.urfu.coinpulse.presentation.profile
 
+import android.Manifest
+import android.app.TimePickerDialog
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -52,11 +57,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.util.Calendar
+import java.util.Locale
+import ru.urfu.coinpulse.R
 import ru.urfu.coinpulse.presentation.theme.Background
 import ru.urfu.coinpulse.presentation.theme.Divider
 import ru.urfu.coinpulse.presentation.theme.Primary
@@ -75,6 +86,7 @@ fun EditProfileRoute(
     viewModel: EditProfileViewModel = viewModel(factory = EditProfileViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -86,6 +98,32 @@ fun EditProfileRoute(
         contract = ActivityResultContracts.TakePicture(),
     ) { success ->
         viewModel.onCameraResult(success)
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (!granted) {
+            Toast.makeText(
+                context,
+                "Notifications are disabled — the reminder may not appear.",
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+        viewModel.onSave()
+    }
+
+    val requestSave = {
+        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        if (needsPermission) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            viewModel.onSave()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -117,7 +155,9 @@ fun EditProfileRoute(
         onFullNameChange = viewModel::onFullNameChange,
         onPositionChange = viewModel::onPositionChange,
         onResumeUrlChange = viewModel::onResumeUrlChange,
-        onDone = viewModel::onSave,
+        onClassTimeChange = viewModel::onClassTimeChange,
+        onTimePicked = viewModel::onTimePicked,
+        onDone = requestSave,
     )
 }
 
@@ -130,9 +170,12 @@ fun EditProfileScreen(
     onFullNameChange: (String) -> Unit,
     onPositionChange: (String) -> Unit,
     onResumeUrlChange: (String) -> Unit,
+    onClassTimeChange: (String) -> Unit,
+    onTimePicked: (Int, Int) -> Unit,
     onDone: () -> Unit,
 ) {
     var showSourceDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     if (showSourceDialog) {
         AlertDialog(
@@ -291,6 +334,19 @@ fun EditProfileScreen(
                 placeholder = "https://example.com/resume.pdf",
                 keyboardType = KeyboardType.Uri,
             )
+            Spacer(Modifier.height(12.dp))
+            ClassTimeField(
+                value = state.classTime,
+                onValueChange = onClassTimeChange,
+                error = state.classTimeError,
+                onPickTime = {
+                    showTimePicker(
+                        context = context,
+                        current = state.classTime,
+                        onTimePicked = onTimePicked,
+                    )
+                },
+            )
 
             Spacer(Modifier.height(16.dp))
             Card(
@@ -364,7 +420,7 @@ fun EditProfileScreen(
         ) {
             Button(
                 onClick = onDone,
-                enabled = !state.isSaving,
+                enabled = !state.isSaving && state.isClassTimeValid,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -415,4 +471,70 @@ private fun EditField(
             unfocusedLabelColor = TextSecondary,
         ),
     )
+}
+
+@Composable
+private fun ClassTimeField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    error: String?,
+    onPickTime: () -> Unit,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("Class time") },
+        placeholder = { Text("09:30", color = TextTertiary) },
+        singleLine = true,
+        isError = error != null,
+        shape = RoundedCornerShape(14.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+        trailingIcon = {
+            IconButton(onClick = onPickTime) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_clock),
+                    contentDescription = "Pick class time",
+                    tint = Primary,
+                )
+            }
+        },
+        supportingText = {
+            Text(
+                text = error ?: "Required · 24-hour format HH:mm",
+                color = if (error != null) MaterialTheme.colorScheme.error else TextTertiary,
+            )
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = TextPrimary,
+            unfocusedTextColor = TextPrimary,
+            cursorColor = Primary,
+            focusedContainerColor = Surface,
+            unfocusedContainerColor = Surface,
+            focusedBorderColor = Primary.copy(alpha = 0.55f),
+            unfocusedBorderColor = Divider,
+            focusedLabelColor = Primary,
+            unfocusedLabelColor = TextSecondary,
+        ),
+    )
+}
+
+private fun showTimePicker(
+    context: android.content.Context,
+    current: String,
+    onTimePicked: (Int, Int) -> Unit,
+) {
+    val now = Calendar.getInstance()
+    val parts = current.split(":")
+    val initialHour = parts.getOrNull(0)?.toIntOrNull() ?: now.get(Calendar.HOUR_OF_DAY)
+    val initialMinute = parts.getOrNull(1)?.toIntOrNull() ?: now.get(Calendar.MINUTE)
+    TimePickerDialog(
+        context,
+        { _, hour, minute ->
+            onTimePicked(hour, minute)
+        },
+        initialHour,
+        initialMinute,
+        true,
+    ).show()
 }

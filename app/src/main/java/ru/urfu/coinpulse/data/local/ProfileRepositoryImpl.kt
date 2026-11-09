@@ -45,6 +45,7 @@ class ProfileRepositoryImpl(
                 position = preferences[Keys.POSITION].orEmpty(),
                 resumeUrl = preferences[Keys.RESUME_URL].orEmpty(),
                 avatarUri = preferences[Keys.AVATAR_URI].orEmpty(),
+                classTime = preferences[Keys.CLASS_TIME].orEmpty(),
             )
         }
 
@@ -54,6 +55,7 @@ class ProfileRepositoryImpl(
             preferences[Keys.POSITION] = profile.position.trim()
             preferences[Keys.RESUME_URL] = profile.resumeUrl.trim()
             preferences[Keys.AVATAR_URI] = profile.avatarUri
+            preferences[Keys.CLASS_TIME] = profile.classTime
         }
     }
 
@@ -148,5 +150,6 @@ class ProfileRepositoryImpl(
         val POSITION = stringPreferencesKey("position")
         val RESUME_URL = stringPreferencesKey("resume_url")
         val AVATAR_URI = stringPreferencesKey("avatar_uri")
+        val CLASS_TIME = stringPreferencesKey("class_time")
     }
 }

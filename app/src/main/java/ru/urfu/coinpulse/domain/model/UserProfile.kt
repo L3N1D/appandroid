@@ -5,12 +5,14 @@ data class UserProfile(
     val position: String = "",
     val resumeUrl: String = "",
     val avatarUri: String = "",
+    val classTime: String = "",
 ) {
     val isEmpty: Boolean
         get() = fullName.isBlank() &&
             position.isBlank() &&
             resumeUrl.isBlank() &&
-            avatarUri.isBlank()
+            avatarUri.isBlank() &&
+            classTime.isBlank()
 }
 
 data class DownloadedDocument(

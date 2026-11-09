@@ -7,11 +7,13 @@ import ru.urfu.coinpulse.data.local.CoinPulseDatabase
 import ru.urfu.coinpulse.data.local.FilterRepositoryImpl
 import ru.urfu.coinpulse.data.local.ProfileRepositoryImpl
 import ru.urfu.coinpulse.data.network.NetworkModule
+import ru.urfu.coinpulse.data.notifications.AlarmReminderScheduler
 import ru.urfu.coinpulse.data.repository.CoinRepositoryImpl
 import ru.urfu.coinpulse.domain.repository.AvatarRepository
 import ru.urfu.coinpulse.domain.repository.CoinRepository
 import ru.urfu.coinpulse.domain.repository.FilterRepository
 import ru.urfu.coinpulse.domain.repository.ProfileRepository
+import ru.urfu.coinpulse.domain.repository.ReminderScheduler
 import ru.urfu.coinpulse.domain.usecase.CreateCameraTargetUseCase
 import ru.urfu.coinpulse.domain.usecase.DeleteAvatarFileUseCase
 import ru.urfu.coinpulse.domain.usecase.DownloadResumeUseCase
@@ -25,6 +27,7 @@ import ru.urfu.coinpulse.domain.usecase.ObserveProfileUseCase
 import ru.urfu.coinpulse.domain.usecase.ResetFiltersUseCase
 import ru.urfu.coinpulse.domain.usecase.SaveFiltersUseCase
 import ru.urfu.coinpulse.domain.usecase.SaveProfileUseCase
+import ru.urfu.coinpulse.domain.usecase.ScheduleClassReminderUseCase
 import ru.urfu.coinpulse.domain.usecase.ToggleFavoriteUseCase
 import ru.urfu.coinpulse.domain.usecase.ValidateProfileUseCase
 import ru.urfu.coinpulse.presentation.filters.FilterBadgeCache
@@ -60,6 +63,8 @@ class AppContainer(context: Context) {
 
     private val avatarRepository: AvatarRepository = AvatarRepositoryImpl(context)
 
+    private val reminderScheduler: ReminderScheduler = AlarmReminderScheduler(context)
+
     val filterBadgeCache = FilterBadgeCache()
 
     val getCoins: GetCoinsUseCase = GetCoinsUseCase(repository)
@@ -79,4 +84,6 @@ class AppContainer(context: Context) {
     val importGalleryAvatar: ImportGalleryAvatarUseCase = ImportGalleryAvatarUseCase(avatarRepository)
     val deleteAvatarFile: DeleteAvatarFileUseCase = DeleteAvatarFileUseCase(avatarRepository)
     val validateProfile: ValidateProfileUseCase = ValidateProfileUseCase()
+    val scheduleClassReminder: ScheduleClassReminderUseCase =
+        ScheduleClassReminderUseCase(reminderScheduler)
 }

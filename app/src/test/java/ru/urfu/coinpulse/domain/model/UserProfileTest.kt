@@ -16,5 +16,6 @@ class UserProfileTest {
         assertFalse(UserProfile(fullName = "Ivan").isEmpty)
         assertFalse(UserProfile(avatarUri = "content://avatar").isEmpty)
         assertFalse(UserProfile(resumeUrl = "https://example.com/cv.pdf").isEmpty)
+        assertFalse(UserProfile(classTime = "09:30").isEmpty)
     }
 }
