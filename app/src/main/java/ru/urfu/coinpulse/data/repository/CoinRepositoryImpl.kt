@@ -4,11 +4,14 @@ import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-import ru.urfu.coinpulse.data.local.FavoritesStore
+import ru.urfu.coinpulse.data.local.FavoriteCoinDao
+import ru.urfu.coinpulse.data.local.toFavoriteEntity
+import ru.urfu.coinpulse.data.local.toDomain as toDomainEntity
 import ru.urfu.coinpulse.data.remote.CoinGeckoApi
 import ru.urfu.coinpulse.data.remote.mapper.toDomain
 import ru.urfu.coinpulse.data.remote.mapper.toPricePoints
@@ -16,18 +19,20 @@ import ru.urfu.coinpulse.domain.error.AppException
 import ru.urfu.coinpulse.domain.model.ChartRange
 import ru.urfu.coinpulse.domain.model.Coin
 import ru.urfu.coinpulse.domain.model.CoinDetails
+import ru.urfu.coinpulse.domain.model.CoinFilters
 import ru.urfu.coinpulse.domain.model.CoinPage
 import ru.urfu.coinpulse.domain.model.CoinSort
 import ru.urfu.coinpulse.domain.repository.CoinRepository
 
 class CoinRepositoryImpl(
     private val api: CoinGeckoApi,
-    private val favoritesStore: FavoritesStore,
+    private val favoriteDao: FavoriteCoinDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : CoinRepository {
 
-    override val favorites: StateFlow<List<Coin>> = favoritesStore.favorites
+    override val favorites: Flow<List<Coin>> = favoriteDao.observeAll()
+        .map { entities -> entities.map { it.toDomainEntity() } }
 
     private val marketCache = MutableStateFlow<CachedMarket?>(null)
     private val detailsCache = MutableStateFlow<Map<String, CachedDetails>>(emptyMap())
@@ -36,20 +41,23 @@ class CoinRepositoryImpl(
     override suspend fun getCoins(
         query: String,
         sort: CoinSort,
+        filters: CoinFilters,
         page: Int,
         pageSize: Int,
         forceRefresh: Boolean,
     ): Result<CoinPage> = withContext(ioDispatcher) {
         try {
             val snapshot = loadMarketSnapshot(forceRefresh)
-            favoritesStore.updateSnapshots(snapshot)
+            syncFavorites(snapshot)
 
             val normalizedQuery = query.trim()
             val filtered = snapshot.filter { coin ->
-                normalizedQuery.isEmpty() ||
-                    coin.name.contains(normalizedQuery, ignoreCase = true) ||
-                    coin.symbol.contains(normalizedQuery, ignoreCase = true) ||
-                    coin.id.contains(normalizedQuery, ignoreCase = true)
+                filters.matches(coin) && (
+                    normalizedQuery.isEmpty() ||
+                        coin.name.contains(normalizedQuery, ignoreCase = true) ||
+                        coin.symbol.contains(normalizedQuery, ignoreCase = true) ||
+                        coin.id.contains(normalizedQuery, ignoreCase = true)
+                    )
             }.sortedWith(sort.comparator())
 
             val from = (page * pageSize).coerceAtLeast(0)
@@ -95,7 +103,7 @@ class CoinRepositoryImpl(
                 ?: throw AppException.EmptyResponse()
 
             detailsCache.value = detailsCache.value + (id to CachedDetails(details, clock()))
-            favoritesStore.updateSnapshots(listOf(details.coin))
+            syncFavorites(listOf(details.coin))
             Result.success(details)
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -140,9 +148,22 @@ class CoinRepositoryImpl(
         }
     }
 
-    override fun toggleFavorite(coin: Coin) = favoritesStore.toggle(coin)
+    override suspend fun toggleFavorite(coin: Coin) = withContext(ioDispatcher) {
+        if (favoriteDao.exists(coin.id)) {
+            favoriteDao.delete(coin.id)
+        } else {
+            favoriteDao.insert(coin.toFavoriteEntity())
+        }
+    }
 
-    override fun isFavorite(id: String): Boolean = favoritesStore.isFavorite(id)
+    private suspend fun syncFavorites(coins: List<Coin>) {
+        if (coins.isEmpty()) return
+        val favoriteIds = favoriteDao.getFavoriteIds().toSet()
+        if (favoriteIds.isEmpty()) return
+        coins.filter { it.id in favoriteIds }.forEach { coin ->
+            favoriteDao.insert(coin.toFavoriteEntity())
+        }
+    }
 
     private suspend fun loadMarketSnapshot(forceRefresh: Boolean): List<Coin> {
         val cached = marketCache.value

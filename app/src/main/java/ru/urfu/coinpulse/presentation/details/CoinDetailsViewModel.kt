@@ -165,7 +165,7 @@ class CoinDetailsViewModel(
 
     fun onFavoriteClick() {
         val coin: Coin = _uiState.value.details?.coin ?: return
-        toggleFavorite(coin)
+        viewModelScope.launch { toggleFavorite(coin) }
     }
 
     companion object {
