@@ -1,135 +1,138 @@
-# CoinPulse — практика 5
+# CoinPulse — практика 6
 
-Android-приложение по данным CoinGecko: живой список криптовалют, детали, графики,
-watchlist и нижняя навигация. В этой практике добавлены **локальное хранение и фильтрация**:
+Android-приложение по данным CoinGecko с профилем пользователя. В этой практике добавлена
+вкладка **Profile** и экран **Edit profile**:
 
-1. **Фильтры** — отдельный экран с тремя настройками, сохранение в **DataStore**.
-2. **Избранное** — отдельный экран Watchlist на **Room**, доступен без интернета.
-3. **Бейдж** — общий in-memory кэш для экранов Markets и Filters, создаётся через **DI**.
+- ФИО, должность, аватар и ссылка на резюме;
+- аватар из галереи или с камеры;
+- сохранение профиля на устройстве между запусками;
+- скачивание резюме по URL и открытие файла в системном просмотрщике.
 
 ## Скриншоты
 
-| Фильтры: три настройки | Список с активным бейджем |
+| Пустой профиль | Редактирование профиля |
 | --- | --- |
-| ![Filters](docs/screenshots/p5_filters_selected.png) | ![Filtered market](docs/screenshots/p5_market_filtered.png) |
-| **Настройки после перезапуска** | **Избранное в Room** |
-| ![Persisted filters](docs/screenshots/p5_persisted_filters.png) | ![Room watchlist](docs/screenshots/p5_watchlist_room.png) |
-| **Избранное без интернета** | **Список по умолчанию** |
-| ![Offline watchlist](docs/screenshots/p5_watchlist_offline.png) | ![Markets](docs/screenshots/p5_market.png) |
+| ![Empty profile](docs/screenshots/p6_profile_empty.png) | ![Edit profile](docs/screenshots/p6_edit_empty.png) |
+| **Выбор источника аватара** | **Аватар из галереи** |
+| ![Avatar source](docs/screenshots/p6_avatar_dialog.png) | ![Gallery avatar](docs/screenshots/p6_avatar_clean.png) |
+| **Аватар с камеры** | **Заполненное редактирование** |
+| ![Camera avatar](docs/screenshots/p6_avatar_camera.png) | ![Filled edit](docs/screenshots/p6_edit_filled.png) |
+| **Готовый профиль** | **Резюме в PDF-просмотрщике** |
+| ![Profile filled](docs/screenshots/p6_profile_filled.png) | ![Resume viewer](docs/screenshots/p6_resume_viewer.png) |
 
-Дополнительно: [фильтры в исходном состоянии](docs/screenshots/p5_filters.png).
+После перезапуска приложения профиль восстанавливается:
+[скриншот](docs/screenshots/p6_profile_persisted.png).
 
 ## Демо
 
 - Практика 3: https://github.com/user-attachments/assets/97b5b6cb-fb10-4d4e-b71c-c4c491aa2930
-- Практика 4: `docs/demo_practice4.mp4` (локальная запись, прикладывается отдельно)
-- Практика 5: `docs/demo_practice5.mp4` (локальная запись, прикладывается отдельно)
+- Практика 4: `docs/demo_practice4.mp4`
+- Практика 5: `docs/demo_practice5.mp4`
+- Практика 6: **`docs/demo_practice6.mp4`**
 
-В записи практики 5: ввод фильтров → Apply → список перезагружается с бейджем →
-приложение выгружается из памяти → настройки и бейдж на месте → добавление в избранное →
-отключение интернета → избранное открывается из Room.
+В записи практики 6: пустой профиль → редактирование → выбор фото → галерея → камера →
+ввод имени и ссылки → Done → заполненный профиль → Resume → PDF открывается в просмотрщике.
+Видеофайлы не коммитятся в git и прикладываются к сдаче отдельно.
 
-## Задача 1. Поиск и фильтрация
+## Экраны
 
-Отдельный экран `Filters` открывается с иконки в шапке Markets.
+### Profile
 
-Три настройки:
+- Аватар, ФИО, должность.
+- Карточка **Resume** с URL и кнопкой скачивания/открытия.
+- Карточка **Profile details**.
+- Кнопка-карандаш в шапке и действие **Create profile** для пустого состояния.
 
-| Настройка | Значения |
-| --- | --- |
-| Minimum market cap | Any / $1B / $10B / $50B |
-| 24h performance | All / Gainers / Losers |
-| Minimum 24h volume | Any / $100M / $1B / $5B |
+### Edit profile
 
-- Значения сохраняются в **Preferences DataStore** (`coin_filters`) по кнопке **Apply filters**.
-- `MarketViewModel` подписан на Flow фильтров из DataStore и перезагружает список при их изменении.
-- Фильтрация применяется до поиска, сортировки и пагинации по закэшированному снимку топ-30
-  CoinGecko (снимок загружается по сети).
-- После перезапуска приложения настройки восстанавливаются, список открывается уже
-  отфильтрованным.
+- Аватар с выбором источника: **Gallery** или **Camera**.
+- Текстовые поля:
+  - Full name;
+  - Position (optional);
+  - Resume / portfolio URL.
+- Кнопка **Done**.
+- Ошибки валидации: пустое имя, ссылка не с `http://`/`https://`.
+- Если пользователь отменяет камеру или выбор фото, изменения не применяются;
+  временный файл камеры удаляется.
 
-Ключи DataStore:
+## Хранение
+
+Профиль — это **одна запись**, поэтому выбрано **Preferences DataStore**, а не Room:
 
 ```text
-min_market_cap : Long
-performance    : String (ALL / GAINERS / LOSERS)
-min_volume_24h : Long
+user_profile:
+  full_name   : String
+  position    : String
+  resume_url  : String
+  avatar_uri  : String
 ```
 
-## Задача 2. Избранное на Room
+- `avatar_uri` указывает на файл внутри приложения (`filesDir/avatars/...`) через
+  `FileProvider`.
+- Изображение из галереи копируется в внутреннее хранилище, поэтому не зависит от
+  временного разрешения на content URI.
+- Снимок камеры пишется сразу в файл приложения через `FileProvider`.
+- Скачанное резюме сохраняется в `cacheDir/resume/...` и открывается через `FileProvider`
+  с `ACTION_VIEW` и `FLAG_GRANT_READ_URI_PERMISSION`.
+- В манифесте зарегистрирован `FileProvider` с путями `avatars/` и `resume/`.
 
-Экран **Watchlist** — это отдельный экран избранного.
+## Аватар и разрешения
 
-- `FavoriteCoinEntity` — Room-сущность с полным снимком монеты (цена, капитализация,
-  изменение, спарклайн и т.д.).
-- `FavoriteCoinDao` — `Flow<List<FavoriteCoinEntity>>`, `insert`, `delete`, `exists`.
-- `CoinPulseDatabase` — база `coinpulse.db`, TypeConverter для `List<Double>` (sparkline).
-- Добавление/удаление — сердечко в списке, на экране деталей или в Watchlist.
-- Так как хранится полный снимок, **избранное доступно без интернета**: проверено
-  включением авиарежима, полной остановкой процесса и повторным запуском.
-- При загрузке рынка/деталей снимки избранных монет обновляются свежими ценами.
+Использован современный сценарий **без явных runtime-разрешений** (это разрешено
+обновлением задания от октября 2026):
 
-## Задача 3. Бейдж
+- **Галерея** — `ActivityResultContracts.PickVisualMedia` (system Photo Picker).
+  Не требуется `READ_MEDIA_IMAGES` / `READ_EXTERNAL_STORAGE`.
+- **Камера** — `ActivityResultContracts.TakePicture` + `ACTION_IMAGE_CAPTURE` через
+  `FileProvider`. Приложение не объявляет `CAMERA`, поэтому отдельный runtime-запрос
+  камеры не нужен.
 
-- `FilterBadgeCache` — общий класс с `StateFlow<Boolean>`.
-- Создаётся один раз в `AppContainer` и инжектится в `MarketViewModel` и `FilterViewModel`.
-- В шапке Markets у иконки фильтров появляется красная точка, если активна хотя бы
-  одна настройка.
-- На экране Filters показывается состояние бейджа и подсказка про несохранённые изменения.
-- Сам факт показа бейджа отдельно **не сохраняется**: при запуске он восстанавливается
-  из DataStore-фильтров в общий in-memory кэш.
+Следствие: стандартного диалога «разрешить доступ к файлам» в сценарии нет, и ветки
+«пользователь запретил доступ» тоже нет. Если пользователь закрывает Photo Picker или
+камеру, экран редактирования просто остаётся открытым, а временный файл удаляется.
+
+Проверено на эмуляторе **Android 17 (API 37)**. `minSdk = 24`; контракты Activity Result
+поддерживают fallback на системный выбор документов на более старых версиях. Других
+системных образов в окружении не было, поэтому отдельно на API 24–36 приложение не
+запускалось.
+
+## Скачивание резюме
+
+- URL проверяется на `http://` / `https://`.
+- OkHttp скачивает файл на `Dispatchers.IO`, имя и MIME определяются из URL/ответа.
+- При успехе UI получает `DownloadedDocument(filePath, mimeType, displayName)`.
+- `ProfileScreen` создаёт content-URI через `FileProvider` и запускает системный
+  `ACTION_VIEW`.
+- Проверено с `https://pdfobject.com/pdf/sample.pdf`: файл скачался и открылся в
+  Google Drive PDF Viewer.
 
 ## Архитектура
 
 ```
 app/src/main/java/ru/urfu/coinpulse/
-├── di/AppContainer.kt                  # Room, DataStore, use cases, FilterBadgeCache
+├── di/AppContainer.kt               # DataStore профиля, AvatarRepository, use cases
 ├── domain/
-│   ├── model/                          # Coin, CoinFilters, PerformanceFilter, ...
-│   ├── repository/                     # CoinRepository, FilterRepository
-│   ├── error/AppException.kt
-│   └── usecase/                        # GetCoins, filters, favorites, details, chart
+│   ├── model/UserProfile.kt         # UserProfile, DownloadedDocument, CameraTarget
+│   ├── repository/ProfileRepository.kt
+│   ├── repository/AvatarRepository.kt
+│   ├── validation/ProfileValidator.kt
+│   └── usecase/ProfileUseCases.kt
 ├── data/
-│   ├── local/
-│   │   ├── CoinPulseDatabase.kt        # Room
-│   │   ├── FavoriteCoinEntity.kt
-│   │   ├── FavoriteCoinDao.kt
-│   │   ├── FavoriteConverters.kt
-│   │   └── FilterRepositoryImpl.kt     # DataStore
-│   ├── network/NetworkModule.kt        # Retrofit / OkHttp / Chucker
-│   ├── remote/                         # CoinGeckoApi, DTO, mappers
-│   └── repository/CoinRepositoryImpl.kt
+│   ├── local/ProfileRepositoryImpl.kt   # DataStore + OkHttp download
+│   ├── local/AvatarRepositoryImpl.kt    # FileProvider + внутренние файлы
+│   └── ...
 └── presentation/
-    ├── market/                         # список + фильтры + бейдж
-    ├── filters/                        # экран настроек + FilterBadgeCache
-    ├── details/
-    ├── watchlist/                      # Room-backed избранное
-    ├── about/
-    ├── components/
-    ├── navigation/
-    └── theme/
+    ├── profile/ProfileScreen.kt
+    ├── profile/EditProfileScreen.kt
+    ├── profile/ProfileViewModel.kt
+    ├── profile/EditProfileViewModel.kt
+    └── ...
 ```
 
-Направление зависимостей:
-
-```
-presentation ──> domain <── data
-```
-
-`domain` не знает про Android, Room, DataStore и Retrofit. `data` реализует контракты
-`CoinRepository` и `FilterRepository`. `presentation` работает с use cases; ViewModels
-не обращаются к DAO/DataStore напрямую.
-
-## Сетевой слой
-
-Сохранён из практики 4:
-
-- Retrofit + OkHttp + Gson, запросы на `Dispatchers.IO`;
-- `GET /coins/markets` для списка;
-- `GET /coins/{id}` для деталей;
-- `GET /coins/{id}/market_chart` для графика;
-- loading / error / retry состояния;
-- Chucker в debug-сборке (About → Network inspector).
+- ViewModels управляют состоянием и вызывают use cases.
+- Activity Result contracts находятся в UI-слое, как и положено для Android API.
+- `domain` не зависит от Android/FileProvider/DataStore.
+- Профиль хранится в `ProfileRepositoryImpl`; аватар и файлы — в data-слое.
 
 ## Тесты
 
@@ -137,40 +140,32 @@ presentation ──> domain <── data
 ./gradlew testDebugUnitTest
 ```
 
-19 unit-тестов:
+24 unit-теста: существующие тесты сети, фильтров, Room-избранного и новые тесты
+`ProfileValidator`/`UserProfile`. Все проходят.
 
-- mappers, chart points;
-- параметры запроса, кэш, force refresh;
-- фильтрация по капитализации, объёму и 24h performance;
-- ошибки `IOException` и HTTP 429;
-- кэш деталей и sparkline для 1D/7D;
-- избранное через DAO и сохранение снимков;
-- `CoinFilters` и `FilterBadgeCache`.
-
-## Сборка и проверка
+## Сборка
 
 ```bash
 ./gradlew assembleDebug
-./gradlew testDebugUnitTest
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`.
+## Сценарий проверки
 
-Ручной сценарий:
-
-1. Markets → иконка фильтров → выбрать $10B / Gainers / $1B → **Apply filters**.
-2. Список перезагружается, у иконки фильтров появляется бейдж.
-3. Полностью закрыть приложение (force-stop) и открыть снова — фильтры и бейдж на месте.
-4. Добавить монету в избранное сердечком.
-5. Открыть Watchlist — монета в Room-избранном.
-6. Включить авиарежим, остановить приложение, открыть снова → Watchlist работает без сети.
+1. Открыть вкладку **Profile** — профиль пуст.
+2. **Create profile / Edit**.
+3. Нажать на аватар → **Gallery** → выбрать фото → оно появляется в редактировании.
+4. Нажать на аватар → **Camera** → снять фото → подтвердить.
+5. Ввести ФИО и ссылку `https://pdfobject.com/pdf/sample.pdf`.
+6. **Done** → профиль заполнен.
+7. **Resume** → PDF скачивается и открывается в системном просмотрщике.
+8. Перезапустить приложение → профиль, аватар и ссылка на месте.
 
 ## Ветка и PR
 
-Ветка практики: `feature/practice-5-storage`.
+Ветка: `feature/practice-6-profile`.
 
 ```bash
-git push -u origin feature/practice-5-storage
+git push -u origin feature/practice-6-profile
 ```
 
-PR создаётся из `feature/practice-5-storage` в `main`; ссылка добавляется в таблицу практики.
+PR создаётся из `feature/practice-6-profile` в `main`; ссылка добавляется в таблицу практики.

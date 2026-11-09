@@ -22,6 +22,10 @@ sealed class AppException(message: String, cause: Throwable? = null) : Exception
         "CoinGecko returned an empty response. Please try again.",
     )
 
+    class InvalidUrl : AppException(
+        "Enter a valid http:// or https:// URL.",
+    )
+
     class Unknown(cause: Throwable) : AppException(
         "Something went wrong while loading data. Please try again.",
         cause,

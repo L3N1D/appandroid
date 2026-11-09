@@ -28,7 +28,7 @@ class NetworkModule(context: Context) {
     private val isDebuggable: Boolean =
         (appContext.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
-    private val client: OkHttpClient by lazy {
+    val client: OkHttpClient by lazy {
         val builder = OkHttpClient.Builder()
             .cache(Cache(File(appContext.cacheDir, "coinpulse_http_cache"), 20L * 1024 * 1024))
             .connectTimeout(20, TimeUnit.SECONDS)
