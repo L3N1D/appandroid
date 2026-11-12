@@ -7,7 +7,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import ru.urfu.coinpulse.presentation.navigation.CoinPulseApp
-import ru.urfu.coinpulse.presentation.theme.CoinPulseTheme
+import ru.urfu.coinpulse.core.designsystem.theme.CoinPulseTheme
 
 class MainActivity : ComponentActivity() {
 

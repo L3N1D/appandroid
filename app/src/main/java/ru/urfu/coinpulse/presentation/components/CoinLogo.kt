@@ -23,10 +23,10 @@ import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
 import ru.urfu.coinpulse.domain.model.Coin
-import ru.urfu.coinpulse.presentation.format.initials
-import ru.urfu.coinpulse.presentation.theme.CoinPalette
-import ru.urfu.coinpulse.presentation.theme.SurfaceElevated
-import ru.urfu.coinpulse.presentation.theme.TextPrimary
+import ru.urfu.coinpulse.core.designsystem.format.initials
+import ru.urfu.coinpulse.core.designsystem.theme.CoinPalette
+import ru.urfu.coinpulse.core.designsystem.theme.SurfaceElevated
+import ru.urfu.coinpulse.core.designsystem.theme.TextPrimary
 
 @Composable
 fun CoinLogo(

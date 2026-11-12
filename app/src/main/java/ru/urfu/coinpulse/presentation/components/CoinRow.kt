@@ -25,17 +25,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.urfu.coinpulse.domain.model.Coin
-import ru.urfu.coinpulse.presentation.format.asCompactCurrency
-import ru.urfu.coinpulse.presentation.format.asPercent
-import ru.urfu.coinpulse.presentation.format.asPrice
-import ru.urfu.coinpulse.presentation.theme.Divider
-import ru.urfu.coinpulse.presentation.theme.Negative
-import ru.urfu.coinpulse.presentation.theme.Positive
-import ru.urfu.coinpulse.presentation.theme.Surface
-import ru.urfu.coinpulse.presentation.theme.TextPrimary
-import ru.urfu.coinpulse.presentation.theme.TextSecondary
-import ru.urfu.coinpulse.presentation.theme.TextTertiary
-import ru.urfu.coinpulse.presentation.theme.Warning
+import ru.urfu.coinpulse.core.designsystem.format.asCompactCurrency
+import ru.urfu.coinpulse.core.designsystem.format.asPercent
+import ru.urfu.coinpulse.core.designsystem.format.asPrice
+import ru.urfu.coinpulse.core.designsystem.theme.Divider
+import ru.urfu.coinpulse.core.designsystem.theme.Negative
+import ru.urfu.coinpulse.core.designsystem.theme.Positive
+import ru.urfu.coinpulse.core.designsystem.theme.Surface
+import ru.urfu.coinpulse.core.designsystem.theme.TextPrimary
+import ru.urfu.coinpulse.core.designsystem.theme.TextSecondary
+import ru.urfu.coinpulse.core.designsystem.theme.TextTertiary
+import ru.urfu.coinpulse.core.designsystem.theme.Warning
 
 @Composable
 fun CoinRow(
