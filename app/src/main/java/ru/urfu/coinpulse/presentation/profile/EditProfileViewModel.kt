@@ -22,19 +22,25 @@ import ru.urfu.coinpulse.domain.usecase.DeleteAvatarFileUseCase
 import ru.urfu.coinpulse.domain.usecase.ImportGalleryAvatarUseCase
 import ru.urfu.coinpulse.domain.usecase.ObserveProfileUseCase
 import ru.urfu.coinpulse.domain.usecase.SaveProfileUseCase
+import ru.urfu.coinpulse.domain.usecase.ScheduleClassReminderUseCase
 import ru.urfu.coinpulse.domain.usecase.ValidateProfileUseCase
+import ru.urfu.coinpulse.domain.validation.ProfileValidator
 
 data class EditProfileUiState(
     val fullName: String = "",
     val position: String = "",
     val resumeUrl: String = "",
     val avatarUri: String = "",
+    val classTime: String = "",
+    val classTimeError: String? = null,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val isImportingAvatar: Boolean = false,
     val pendingCamera: CameraTarget? = null,
     val error: String? = null,
-)
+) {
+    val isClassTimeValid: Boolean get() = ProfileValidator.isValidClassTime(classTime)
+}
 
 sealed interface EditProfileEvent {
     data class LaunchCamera(val uri: String) : EditProfileEvent
@@ -48,6 +54,7 @@ class EditProfileViewModel(
     private val createCameraTarget: CreateCameraTargetUseCase,
     private val importGalleryAvatar: ImportGalleryAvatarUseCase,
     private val deleteAvatarFile: DeleteAvatarFileUseCase,
+    private val scheduleClassReminder: ScheduleClassReminderUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditProfileUiState())
@@ -65,6 +72,7 @@ class EditProfileViewModel(
                     position = profile.position,
                     resumeUrl = profile.resumeUrl,
                     avatarUri = profile.avatarUri,
+                    classTime = profile.classTime,
                     isLoading = false,
                 )
             }
@@ -81,6 +89,27 @@ class EditProfileViewModel(
 
     fun onResumeUrlChange(value: String) {
         _uiState.update { it.copy(resumeUrl = value, error = null) }
+    }
+
+    fun onClassTimeChange(value: String) {
+        val limited = value.take(5)
+        val error = when {
+            limited.isBlank() -> null
+            !ProfileValidator.isValidClassTime(limited) ->
+                "Use 24-hour HH:mm format (for example 09:30)."
+            else -> null
+        }
+        _uiState.update {
+            it.copy(
+                classTime = limited,
+                classTimeError = error,
+                error = null,
+            )
+        }
+    }
+
+    fun onTimePicked(hour: Int, minute: Int) {
+        onClassTimeChange(String.format(java.util.Locale.US, "%02d:%02d", hour, minute))
     }
 
     fun onGallerySelected(uri: String) {
@@ -141,23 +170,33 @@ class EditProfileViewModel(
     fun onSave() {
         val state = _uiState.value
         if (state.isSaving) return
-        val validationError = validateProfile(state.fullName, state.resumeUrl)
+        val validationError = validateProfile(
+            state.fullName,
+            state.resumeUrl,
+            state.classTime,
+        )
         if (validationError != null) {
-            _uiState.update { it.copy(error = validationError) }
+            _uiState.update {
+                it.copy(
+                    error = validationError,
+                    classTimeError = if (!state.isClassTimeValid) validationError else it.classTimeError,
+                )
+            }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
             try {
-                saveProfile(
-                    UserProfile(
-                        fullName = state.fullName.trim(),
-                        position = state.position.trim(),
-                        resumeUrl = state.resumeUrl.trim(),
-                        avatarUri = state.avatarUri,
-                    ),
+                val profile = UserProfile(
+                    fullName = state.fullName.trim(),
+                    position = state.position.trim(),
+                    resumeUrl = state.resumeUrl.trim(),
+                    avatarUri = state.avatarUri,
+                    classTime = state.classTime,
                 )
+                saveProfile(profile)
+                scheduleClassReminder(profile)
                 _uiState.update { it.copy(isSaving = false) }
                 _events.emit(EditProfileEvent.Saved)
             } catch (throwable: Throwable) {
@@ -183,6 +222,7 @@ class EditProfileViewModel(
                     createCameraTarget = application.container.createCameraTarget,
                     importGalleryAvatar = application.container.importGalleryAvatar,
                     deleteAvatarFile = application.container.deleteAvatarFile,
+                    scheduleClassReminder = application.container.scheduleClassReminder,
                 )
             }
         }

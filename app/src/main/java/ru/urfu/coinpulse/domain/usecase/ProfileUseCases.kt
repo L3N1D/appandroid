@@ -6,6 +6,7 @@ import ru.urfu.coinpulse.domain.model.DownloadedDocument
 import ru.urfu.coinpulse.domain.model.UserProfile
 import ru.urfu.coinpulse.domain.repository.AvatarRepository
 import ru.urfu.coinpulse.domain.repository.ProfileRepository
+import ru.urfu.coinpulse.domain.repository.ReminderScheduler
 import ru.urfu.coinpulse.domain.validation.ProfileValidator
 
 class ObserveProfileUseCase(
@@ -46,6 +47,12 @@ class DeleteAvatarFileUseCase(
 }
 
 class ValidateProfileUseCase {
-    operator fun invoke(fullName: String, resumeUrl: String): String? =
-        ProfileValidator.validate(fullName, resumeUrl)
+    operator fun invoke(fullName: String, resumeUrl: String, classTime: String): String? =
+        ProfileValidator.validate(fullName, resumeUrl, classTime)
+}
+
+class ScheduleClassReminderUseCase(
+    private val scheduler: ReminderScheduler,
+) {
+    operator fun invoke(profile: UserProfile): Result<Long> = scheduler.schedule(profile)
 }

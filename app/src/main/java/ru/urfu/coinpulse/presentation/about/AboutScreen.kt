@@ -68,7 +68,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                 color = TextPrimary,
             )
             Text(
-                text = "Practice 6 · profile & local files",
+                text = "Practice 7 · class reminder notifications",
                 style = MaterialTheme.typography.labelMedium,
                 color = TextTertiary,
             )
@@ -131,6 +131,10 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             FeatureRow("Offline watchlist stored in Room")
             FeatureRow("Shared filter badge cache created via DI")
             FeatureRow("Profile with gallery/camera avatar and resume download")
+            FeatureRow("Class time field with keyboard and TimePicker input")
+            FeatureRow("HH:mm validation disables saving while invalid")
+            FeatureRow("AlarmManager + BroadcastReceiver reminder notification")
+            FeatureRow("Tap notification opens CoinPulse")
             FeatureRow("Details screen with a ConstraintLayout stats grid")
         }
 
@@ -140,8 +144,9 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             FeatureRow("Badge: shared FilterBadgeCache instance created by AppContainer")
             FeatureRow("Profile: DataStore fields + avatar copied into internal storage")
             FeatureRow("Resume: downloaded with OkHttp and opened via FileProvider")
+            FeatureRow("Class time: validated HH:mm and scheduled with AlarmManager")
             Text(
-                text = "Gallery uses the system Photo Picker and camera uses ACTION_IMAGE_CAPTURE with FileProvider, so no storage or camera runtime permission is requested.",
+                text = "Gallery uses the system Photo Picker and camera uses ACTION_IMAGE_CAPTURE with FileProvider, so no storage or camera runtime permission is requested. Android 13+ asks for POST_NOTIFICATIONS before saving the reminder.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
                 modifier = Modifier.padding(top = 6.dp),
@@ -182,6 +187,9 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     "Room / KSP",
                     "FileProvider",
                     "Photo Picker",
+                    "AlarmManager",
+                    "BroadcastReceiver",
+                    "NotificationChannel",
                     "UseCases",
                     "Clean Architecture",
                     "Chucker",
@@ -233,7 +241,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.padding(start = 6.dp))
             Text(
-                text = "Profile fields and avatars stay on the device; the resume is downloaded on demand.",
+                text = "The class reminder is scheduled for the next occurrence today, or tomorrow if the entered time has already passed.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
             )

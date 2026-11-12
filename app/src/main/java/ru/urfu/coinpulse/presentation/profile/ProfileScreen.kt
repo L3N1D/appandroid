@@ -289,6 +289,7 @@ private fun ProfileContent(
                 ProfileInfoRow("Position", profile.position.ifBlank { "Not set" })
                 ProfileInfoRow("Avatar", if (profile.avatarUri.isBlank()) "Not set" else "Local photo")
                 ProfileInfoRow("Resume", if (profile.resumeUrl.isBlank()) "Not set" else "Saved URL")
+                ProfileInfoRow("Class reminder", profile.classTime.ifBlank { "Not set" })
             }
         }
     }
