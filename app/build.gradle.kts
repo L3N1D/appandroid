@@ -66,6 +66,9 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    implementation(project(":core:designsystem"))
+    implementation(project(":feature:profile"))
+
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

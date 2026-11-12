@@ -11,9 +11,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import ru.urfu.coinpulse.presentation.theme.Divider
-import ru.urfu.coinpulse.presentation.theme.Negative
-import ru.urfu.coinpulse.presentation.theme.Positive
+import ru.urfu.coinpulse.core.designsystem.theme.Divider
+import ru.urfu.coinpulse.core.designsystem.theme.Negative
+import ru.urfu.coinpulse.core.designsystem.theme.Positive
 
 /** Compact 7-day sparkline used inside list rows. */
 @Composable

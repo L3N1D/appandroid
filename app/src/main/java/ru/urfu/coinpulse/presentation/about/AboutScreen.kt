@@ -39,14 +39,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.pm.ApplicationInfo
 import com.chuckerteam.chucker.api.Chucker
-import ru.urfu.coinpulse.presentation.theme.Divider
-import ru.urfu.coinpulse.presentation.theme.Primary
-import ru.urfu.coinpulse.presentation.theme.PrimaryMuted
-import ru.urfu.coinpulse.presentation.theme.Surface
-import ru.urfu.coinpulse.presentation.theme.SurfaceHighest
-import ru.urfu.coinpulse.presentation.theme.TextPrimary
-import ru.urfu.coinpulse.presentation.theme.TextSecondary
-import ru.urfu.coinpulse.presentation.theme.TextTertiary
+import ru.urfu.coinpulse.core.designsystem.theme.Divider
+import ru.urfu.coinpulse.core.designsystem.theme.Primary
+import ru.urfu.coinpulse.core.designsystem.theme.PrimaryMuted
+import ru.urfu.coinpulse.core.designsystem.theme.Surface
+import ru.urfu.coinpulse.core.designsystem.theme.SurfaceHighest
+import ru.urfu.coinpulse.core.designsystem.theme.TextPrimary
+import ru.urfu.coinpulse.core.designsystem.theme.TextSecondary
+import ru.urfu.coinpulse.core.designsystem.theme.TextTertiary
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -136,6 +136,21 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             FeatureRow("AlarmManager + BroadcastReceiver reminder notification")
             FeatureRow("Tap notification opens CoinPulse")
             FeatureRow("Details screen with a ConstraintLayout stats grid")
+            FeatureRow("Profile screens extracted into :feature:profile")
+            FeatureRow("Shared theme and state views in :core:designsystem")
+            FeatureRow("Modules never depend on :app — dependencies point app → modules")
+        }
+
+        SectionCard(title = "Module architecture") {
+            FeatureRow("app — Compose navigation, markets, filters, about")
+            FeatureRow(":feature:profile — profile + edit profile screens and their domain/data")
+            FeatureRow(":core:designsystem — theme, formatting and shared state views")
+            Text(
+                text = "app depends on :feature:profile and :core:designsystem. The feature module depends only on :core:designsystem, so no module depends on :app. Feature ViewModels get their dependencies from ProfileComponent through the ProfileDependenciesProvider interface implemented by the app.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                modifier = Modifier.padding(top = 6.dp),
+            )
         }
 
         SectionCard(title = "Local storage") {
@@ -190,6 +205,9 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     "AlarmManager",
                     "BroadcastReceiver",
                     "NotificationChannel",
+                    "Multi-module",
+                    "Feature module",
+                    "Core module",
                     "UseCases",
                     "Clean Architecture",
                     "Chucker",

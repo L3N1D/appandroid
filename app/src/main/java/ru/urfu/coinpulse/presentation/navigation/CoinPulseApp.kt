@@ -23,13 +23,13 @@ import ru.urfu.coinpulse.presentation.about.AboutScreen
 import ru.urfu.coinpulse.presentation.details.CoinDetailsRoute
 import ru.urfu.coinpulse.presentation.filters.FilterRoute
 import ru.urfu.coinpulse.presentation.market.MarketRoute
-import ru.urfu.coinpulse.presentation.profile.EditProfileRoute
-import ru.urfu.coinpulse.presentation.profile.ProfileRoute
-import ru.urfu.coinpulse.presentation.theme.Background
-import ru.urfu.coinpulse.presentation.theme.Primary
-import ru.urfu.coinpulse.presentation.theme.PrimaryMuted
-import ru.urfu.coinpulse.presentation.theme.Surface
-import ru.urfu.coinpulse.presentation.theme.TextTertiary
+import ru.urfu.coinpulse.feature.profile.presentation.profile.EditProfileRoute
+import ru.urfu.coinpulse.feature.profile.presentation.profile.ProfileRoute
+import ru.urfu.coinpulse.core.designsystem.theme.Background
+import ru.urfu.coinpulse.core.designsystem.theme.Primary
+import ru.urfu.coinpulse.core.designsystem.theme.PrimaryMuted
+import ru.urfu.coinpulse.core.designsystem.theme.Surface
+import ru.urfu.coinpulse.core.designsystem.theme.TextTertiary
 import ru.urfu.coinpulse.presentation.watchlist.WatchlistRoute
 
 @Composable

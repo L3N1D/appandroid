@@ -18,9 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import ru.urfu.coinpulse.presentation.format.asPercent
-import ru.urfu.coinpulse.presentation.theme.Negative
-import ru.urfu.coinpulse.presentation.theme.Positive
+import ru.urfu.coinpulse.core.designsystem.format.asPercent
+import ru.urfu.coinpulse.core.designsystem.theme.Negative
+import ru.urfu.coinpulse.core.designsystem.theme.Positive
 
 @Composable
 fun ChangeBadge(

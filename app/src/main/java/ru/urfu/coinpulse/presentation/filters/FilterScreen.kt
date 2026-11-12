@@ -44,16 +44,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.urfu.coinpulse.domain.model.PerformanceFilter
-import ru.urfu.coinpulse.presentation.theme.Divider
-import ru.urfu.coinpulse.presentation.theme.Negative
-import ru.urfu.coinpulse.presentation.theme.Primary
-import ru.urfu.coinpulse.presentation.theme.PrimaryMuted
-import ru.urfu.coinpulse.presentation.theme.Surface
-import ru.urfu.coinpulse.presentation.theme.SurfaceElevated
-import ru.urfu.coinpulse.presentation.theme.SurfaceHighest
-import ru.urfu.coinpulse.presentation.theme.TextPrimary
-import ru.urfu.coinpulse.presentation.theme.TextSecondary
-import ru.urfu.coinpulse.presentation.theme.TextTertiary
+import ru.urfu.coinpulse.core.designsystem.theme.Divider
+import ru.urfu.coinpulse.core.designsystem.theme.Negative
+import ru.urfu.coinpulse.core.designsystem.theme.Primary
+import ru.urfu.coinpulse.core.designsystem.theme.PrimaryMuted
+import ru.urfu.coinpulse.core.designsystem.theme.Surface
+import ru.urfu.coinpulse.core.designsystem.theme.SurfaceElevated
+import ru.urfu.coinpulse.core.designsystem.theme.SurfaceHighest
+import ru.urfu.coinpulse.core.designsystem.theme.TextPrimary
+import ru.urfu.coinpulse.core.designsystem.theme.TextSecondary
+import ru.urfu.coinpulse.core.designsystem.theme.TextTertiary
 
 @Composable
 fun FilterRoute(

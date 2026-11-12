@@ -1,123 +1,112 @@
-# CoinPulse — практика 7
+# CoinPulse — практика 8
 
-Практика **«Время любимой пары» (уведомления)**. В профиль добавлено поле времени пары,
-его можно ввести вручную или выбрать через виджет часов. В установленное время приходит
-локальное push-уведомление с именем пользователя, по нажатию открывается приложение.
+Практика **«Многомодульность»**. Функции экранов **Profile** вынесены из монолита `app`
+в отдельный Gradle-модуль `:feature:profile`, а общие ресурсы — в `:core:designsystem`.
+Зависимости направлены только из `app` в модули: модули не зависят от `app`.
+
+## Модули
+
+| Модуль | Назначение |
+| --- | --- |
+| `:app` | Точка входа, `MainActivity`, Compose-навигация, Markets / Watchlist / Filters / About |
+| `:feature:profile` | Экраны профиля и его редактирования, domain/data/notifications/res, unit-тесты |
+| `:core:designsystem` | Тема, форматирование и общие composable-состояния (`EmptyState`, `ErrorState`, `SkeletonList`, …) |
+
+```text
+app ──────────► :feature:profile ──► :core:designsystem
+ └────────────► :core:designsystem
+```
+
+- `app/build.gradle.kts` содержит `implementation(project(":core:designsystem"))`
+  и `implementation(project(":feature:profile"))`.
+- `feature/profile/build.gradle.kts` содержит только
+  `implementation(project(":core:designsystem"))`.
+- Ни в одном модуле нет `project(":app")` и импортов из `ru.urfu.coinpulse.*` верхнего уровня
+  (`CoinPulseApplication`, `MainActivity`, app-`R`, app-`domain`/`data`).
+
+## Как связаны app и feature
+
+`ProfileComponent` — DI-граф самого модуля профиля (репозитории, use case'ы,
+`AlarmReminderScheduler`). Наружу модуль отдаёт только:
+
+```kotlin
+interface ProfileDependenciesProvider {
+    val profileComponent: ProfileComponent
+}
+```
+
+`CoinPulseApplication` реализует этот интерфейс и создаёт компонент через
+`ProfileFeature.create(this)`. ViewModel'и внутри `:feature:profile` получают зависимости
+из `ProfileDependenciesProvider`, поэтому feature ничего не знает про `AppContainer` и `:app`.
+
+`app` хранит только константы маршрутов и вызывает `ProfileRoute` / `EditProfileRoute`
+из feature-модуля.
+
+Уведомление о паре тоже не ссылается на `MainActivity` из `:app`: receiver запускает
+приложение через `packageManager.getLaunchIntentForPackage(...)`.
+
+## Структура feature-модуля
+
+```text
+feature/profile/src/main/java/ru/urfu/coinpulse/feature/profile/
+  ProfileComponent.kt              # DI-граф + ProfileDependenciesProvider
+  domain/model/UserProfile.kt
+  domain/repository/               # ProfileRepository, AvatarRepository, ReminderScheduler
+  domain/usecase/ProfileUseCases.kt
+  domain/validation/ProfileValidator.kt
+  domain/error/AppException.kt
+  data/local/                      # DataStore, файлы аватара, FileProvider
+  data/notifications/              # AlarmReminderScheduler, ClassReminderReceiver
+  presentation/profile/            # ProfileRoute, EditProfileRoute, ViewModel'и
+feature/profile/src/main/AndroidManifest.xml
+feature/profile/src/main/res/      # иконки часов/уведомления, file_paths.xml
+feature/profile/src/test/          # ProfileValidatorTest, UserProfileTest
+```
+
+Manifest модуля содержит `POST_NOTIFICATIONS`, `FileProvider` и
+`ClassReminderReceiver` с полным именем класса; манифест приложения от них избавлен.
+Итоговый manifest собирается слиянием: authority остаётся
+`ru.urfu.coinpulse.fileprovider`, receiver —
+`ru.urfu.coinpulse.feature.profile.data.notifications.ClassReminderReceiver`.
 
 ## Скриншоты
 
-| Поле времени в профиле | Ошибка валидации HH:mm |
+| Профиль (из `:feature:profile`) | Редактирование профиля |
 | --- | --- |
-| ![Edit class time](docs/screenshots/p7_edit.png) | ![Validation](docs/screenshots/p7_invalid.png) |
-| **Ввод с клавиатуры** | **Выбор времени с часов** |
-| ![Manual time](docs/screenshots/p7_manual_valid.png) | ![Time picker](docs/screenshots/p7_timepicker.png) |
-| **Профиль с напоминанием** | **Push-уведомление** |
-| ![Profile](docs/screenshots/p7_profile.png) | ![Notification](docs/screenshots/p7_notification.png) |
+| ![Profile](docs/screenshots/p8_profile.png) | ![Edit profile](docs/screenshots/p8_edit.png) |
 
-## Демо
-
-- Практика 3: https://github.com/user-attachments/assets/97b5b6cb-fb10-4d4e-b71c-c4c491aa2930
-- Практика 4: `docs/demo_practice4.mp4`
-- Практика 5: `docs/demo_practice5.mp4`
-- Практика 6: `docs/demo_practice6.mp4`
-- Практика 7: **`docs/demo_practice7.mp4`**
-
-В записи:
-1. ручной ввод времени;
-2. неверное время `25:99` → ошибка, Done недоступен;
-3. корректное время → Done доступен;
-4. выбор времени через часы (TimePicker);
-5. профиль с напоминанием;
-6. срабатывание уведомления в установленное время;
-7. нажатие на уведомление открывает приложение.
-
-Видеофайлы не коммитятся в git и прикладываются к сдаче отдельно.
-
-## Реализация
-
-### Время пары
-
-- В `UserProfile` добавлено поле `classTime`.
-- Оно сохраняется в Preferences DataStore (`user_profile` → `class_time`).
-- Поле редактируется двумя способами:
-  - вручную с клавиатуры;
-  - через `TimePickerDialog` (кнопка с иконкой часов).
-- Формат — **24-hour `HH:mm`**, валидация регуляркой:
-  `^([01]\d|2[0-3]):[0-5]\d$`.
-- Если поле пустое или неверное, кнопка **Done** недоступна, а под полем показывается ошибка.
-- Время отображается в профиле в строке **Class reminder**.
-
-### Планирование и уведомление
-
-- `AlarmReminderScheduler` реализует `ReminderScheduler` через `AlarmManager`.
-- Время срабатывания — ближайшее наступление `classTime`:
-  сегодня, если время ещё не прошло, иначе завтра.
-- Используется `setExactAndAllowWhileIdle`, если доступны точные будильники; иначе
-  `setWindow` с коротким окном, чтобы не требовать специального доступа к exact alarms.
-- `ClassReminderReceiver` — `BroadcastReceiver`:
-  - создаёт `NotificationChannel` `class_reminder`;
-  - показывает уведомление через `NotificationManagerCompat`;
-  - текст: «It's time for your favorite class, {name}!»;
-  - `PendingIntent` открывает `MainActivity` по нажатию.
-- На Android 13+ перед сохранением запрашивается `POST_NOTIFICATIONS`.
-- Напоминание работает и после выгрузки приложения из памяти: его держит AlarmManager,
-  а receiver запускается системой.
-
-### Разрешения и разные версии Android
-
-- `POST_NOTIFICATIONS` запрашивается на Android 13+ (API 33+); на более старых версиях
-  уведомления разрешены по умолчанию.
-- Для файлов/камеры из практики 6 runtime-разрешения не нужны: используются system Photo
-  Picker и `ACTION_IMAGE_CAPTURE` через FileProvider.
-- Проверено на эмуляторе **Android 17 (API 37)**: уведомление пришло в заданное время,
-  нажатие открыло приложение.
-- Других системных образов в окружении не было, поэтому отдельно на API 24–36 приложение
-  не запускалось. `minSdk = 24`; используемые API имеют fallback для старых версий.
-
-## Архитектура
-
-```
-domain/
-  model/UserProfile.kt          # + classTime
-  repository/ReminderScheduler.kt
-  usecase/ProfileUseCases.kt    # ScheduleClassReminderUseCase
-  validation/ProfileValidator.kt
-data/
-  notifications/AlarmReminderScheduler.kt
-  notifications/ClassReminderReceiver.kt
-  local/ProfileRepositoryImpl.kt
-presentation/
-  profile/EditProfileScreen.kt  # TimePicker + permission request
-  profile/EditProfileViewModel.kt
-  profile/ProfileScreen.kt
-di/AppContainer.kt
-```
-
-- ViewModel вызывает use case сохранения профиля и планирования напоминания.
-- `AlarmManager`, `BroadcastReceiver` и `NotificationManager` находятся в data-слое.
-- `domain` не зависит от Android.
-
-## Тесты
-
-```bash
-./gradlew testDebugUnitTest
-```
-
-**26 unit-тестов**, все проходят. Добавлены проверки `HH:mm`‑валидации и поля `classTime`
-в `UserProfile`.
-
-## Сборка
+## Проверка
 
 ```bash
 ./gradlew assembleDebug
+./gradlew testDebugUnitTest
 ```
+
+- `BUILD SUCCESSFUL`.
+- **26 unit-тестов**, все проходят:
+  - `:app` — 19 тестов (CoinMappers, CoinRepositoryImpl, CoinFilters, FilterBadgeCache);
+  - `:feature:profile` — 7 тестов (ProfileValidator, UserProfile).
+- Проверено на эмуляторе **Android 17 (API 37)**:
+  - приложение запускается и открывает Profile-экран из модуля;
+  - редактирование, валидация `HH:mm` и сохранение работают;
+  - после «Done» профиль обновляется, а напоминание планируется через `AlarmManager`;
+  - уведомление и переход в приложение продолжают работать после переноса кода в модуль.
+
+## История практик
+
+- Практика 3: `feature/practice-3-*`
+- Практика 4: `feature/practice-4-*`
+- Практика 5: `feature/practice-5-*`
+- Практика 6: профиль, аватар (галерея/камера), резюме
+- Практика 7: поле времени пары, `AlarmManager` + push-уведомление
+- Практика 8: многомодульность (`:app` → `:feature:profile` → `:core:designsystem`)
 
 ## Ветка и PR
 
-Ветка: `feature/practice-7-notifications`.
+Ветка: `feature/practice-8-modularization`.
 
 ```bash
-git push -u origin feature/practice-7-notifications
+git push -u origin feature/practice-8-modularization
 ```
 
-PR создаётся из `feature/practice-7-notifications` в `main`.
+PR создаётся из `feature/practice-8-modularization` в `main`.

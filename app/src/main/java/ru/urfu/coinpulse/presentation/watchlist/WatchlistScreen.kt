@@ -27,15 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.urfu.coinpulse.presentation.components.CoinRow
-import ru.urfu.coinpulse.presentation.components.EmptyState
-import ru.urfu.coinpulse.presentation.components.SkeletonList
-import ru.urfu.coinpulse.presentation.format.asCompactCurrency
-import ru.urfu.coinpulse.presentation.theme.Divider
-import ru.urfu.coinpulse.presentation.theme.Primary
-import ru.urfu.coinpulse.presentation.theme.Surface
-import ru.urfu.coinpulse.presentation.theme.TextPrimary
-import ru.urfu.coinpulse.presentation.theme.TextSecondary
-import ru.urfu.coinpulse.presentation.theme.TextTertiary
+import ru.urfu.coinpulse.core.designsystem.components.EmptyState
+import ru.urfu.coinpulse.core.designsystem.components.SkeletonList
+import ru.urfu.coinpulse.core.designsystem.format.asCompactCurrency
+import ru.urfu.coinpulse.core.designsystem.theme.Divider
+import ru.urfu.coinpulse.core.designsystem.theme.Primary
+import ru.urfu.coinpulse.core.designsystem.theme.Surface
+import ru.urfu.coinpulse.core.designsystem.theme.TextPrimary
+import ru.urfu.coinpulse.core.designsystem.theme.TextSecondary
+import ru.urfu.coinpulse.core.designsystem.theme.TextTertiary
 
 @Composable
 fun WatchlistRoute(
